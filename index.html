@@ -66,7 +66,7 @@ h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(40px, 
 .links { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; }
 .links a { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
 .orcid-id { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
-.curve { width: 100%; max-width: 440px; justify-self: end; }
+.curve { width: 100%; max-width: 440px; justify-self: end; margin: 0; }
 .curve svg { display: block; width: 100%; height: auto; overflow: visible; }
 .curve figcaption { font-size: 12.5px; color: var(--muted); margin-top: 8px; font-style: italic; font-family: var(--font-display); }
 
@@ -77,9 +77,36 @@ h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(40px, 
 
 /* Sections */
 main .wrap { padding-block: 12px 64px; }
-section.block { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 32px; padding: 44px 0; border-bottom: 1px solid var(--line); }
+section.block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 36px 0 8px; }
+section.block + section.block { border-top: 1px solid var(--line); margin-top: 28px; }
+
+/* Tab bar */
+.tabbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15; background: var(--bg); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 16; background: var(--bg); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin: 0; padding: 0; list-style: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { font: inherit; font-size: 14.5px; font-weight: 500; white-space: nowrap; background: none; border: 0; border-bottom: 3px solid transparent; color: var(--muted); padding: 14px 14px 11px; cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tab .n { font-family: var(--font-mono); font-size: 11.5px; margin-left: 6px; color: var(--muted); font-weight: 400; }
+.panel[hidden] { display: none !important; }
+
+/* Tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.tile { display: grid; gap: 4px; align-content: start; text-align: left; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 16px 14px; cursor: pointer; text-decoration: none; transition: border-color .15s, transform .15s; }
+.tile:hover { border-color: var(--accent); transform: translateY(-2px); }
+.tile b { font-family: var(--font-display); font-size: 30px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
+.tile .t-label { font-size: 14px; font-weight: 600; }
+.tile .t-sub { font-size: 12.5px; color: var(--muted); }
+.tile.link b { font-size: 18px; font-family: var(--font-body); font-weight: 600; color: var(--ink); }
+.recent { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.recent li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; }
+.recent .y { font-family: var(--font-mono); font-size: 13px; color: var(--accent); padding-top: 3px; }
+.recent .pub-title { font-size: 17px; }
+.more { font: inherit; font-size: 14px; font-weight: 500; background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .tile { transition: none; } .tile:hover { transform: none; } }
 section.block:last-of-type { border-bottom: 0; }
-.block-head h2 { font-family: var(--font-display); font-size: 26px; font-weight: 500; margin: 0; line-height: 1.15; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.block-head h2 { font-family: var(--font-display); font-size: 28px; font-weight: 500; margin: 0; line-height: 1.15; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 .block-head .count { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 400; }
 .block-body { min-width: 0; }
 .prose p { max-width: var(--measure); margin: 0 0 14px; }
@@ -159,8 +186,7 @@ dialog h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px;
 @media (max-width: 800px) {
   .hero .wrap { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 36px 30px; }
   .curve { justify-self: start; max-width: 360px; }
-  section.block { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 32px 0; }
-  .block-head h2 { position: static; }
+  section.block { padding: 26px 0 4px; }
   .year-group { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .record { grid-template-columns: minmax(0, 1fr); }
   .record .when { text-align: left; }
@@ -173,7 +199,8 @@ dialog h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px;
 </head>
 <body>
 <div id="app"></div>
-<!-- TO UPDATE THE SITE: edit the JSON below (publications, supervision, reviewing, teaching), then commit. -->
+<!-- TO UPDATE THE SITE: edit the JSON below, then commit. Lists: publications, supervision, reviewing, teaching, education, service.
+     A tab appears automatically once its list has at least one entry. -->
 <script type="application/json" id="site-data">{
   "profile": {
     "name": "Jacob Majakwara",
@@ -207,6 +234,11 @@ dialog h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px;
   "supervision": [],
   "reviewing": [],
   "teaching": [],
+  "education": [
+    {"id": "e1", "degree": "Postgraduate thesis", "institution": "University of the Witwatersrand", "year": "2018", "thesis": "On some likelihood inference for the destructive COM-Poisson cure rate model with generalised gamma lifetime"},
+    {"id": "e2", "degree": "Postgraduate thesis", "institution": "Rhodes University", "year": "2009", "thesis": "Application of multiserver queueing to call centres"}
+  ],
+  "service": [],
   "updated": "2026-10-22"
 }</script>
 <script id="site-app">
@@ -294,7 +326,7 @@ dialog h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px;
       '<text x="' + (x0 - 8) + '" y="' + (Y(.5) + 4) + '" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--muted)">0.5</text>' +
       '<text x="' + (x0 - 8) + '" y="' + (Y(0) + 4) + '" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--muted)">0</text>' +
       '<text x="' + (x0 + w) + '" y="' + (y0 + h + 22) + '" text-anchor="end" font-family="Newsreader, Georgia, serif" font-style="italic" font-size="14" fill="var(--muted)">t</text>' +
-      '<text x="' + (x0 + 6) + '" y="' + (y0 + 2) + '" font-family="Newsreader, Georgia, serif" font-style="italic" font-size="14" fill="var(--muted)">S(t)</text>' +
+      '<text x="' + (x0 + 30) + '" y="' + (y0 + 26) + '" font-family="Newsreader, Georgia, serif" font-style="italic" font-size="14" fill="var(--muted)">S(t)</text>' +
       '<line x1="' + x0 + '" y1="' + Y(.42) + '" x2="' + (x0 + w) + '" y2="' + Y(.42) + '" stroke="var(--plateau)" stroke-width="1" stroke-dasharray="3 4"/>' +
       '<path class="km-path" d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="miter"/>' +
       ticks +
@@ -433,14 +465,88 @@ dialog h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px;
       '<p class="orcid-id" style="margin-top:12px">' + esc(p.unit) + ', ' + esc(p.institution) + '</p>');
   }
 
-  function render() {
-    var banner = editing ? '<div class="edit-banner"><div class="wrap">Editing mode. Changes stay in this browser until you choose <strong>Publish changes</strong>. Visitors only ever see the published version.</div></div>' : '';
-    document.getElementById("app").innerHTML = banner + heroHTML() +
-      '<main><div class="wrap">' + aboutHTML() + pubsHTML() + supervisionHTML() + reviewingHTML() + teachingHTML() + contactHTML() + '</div></main>' +
-      '<footer><div class="wrap"><span>© ' + new Date().getFullYear() + ' ' + esc(state.profile.name) + '</span><span>Records last updated ' + esc(state.updated || "") + '</span></div></footer>' +
-      ownerBarHTML();
-    document.body.classList.toggle("editing", editing);
+  function educationHTML() {
+    var items = state.education || [];
+    if (!items.length) return "";
+    return sectionWrap("education", "Education", null, '<ul class="records">' + items.map(function (e) {
+      return '<li class="record"><div><h3>' + esc(e.institution) + (e.degree ? ' <span class="status completed">' + esc(e.degree) + '</span>' : '') + '</h3>' +
+        (e.thesis ? '<p><em>' + esc(e.thesis) + '</em></p>' : '') + '</div><div class="when">' + esc(e.year || "") + '</div></li>';
+    }).join("") + '</ul>');
   }
+  function serviceHTML() {
+    var items = state.service || [];
+    if (!items.length) return "";
+    return sectionWrap("service", "Service and memberships", String(items.length), '<ul class="records">' + items.map(function (s) {
+      return '<li class="record"><div><h3>' + esc(s.role) + '</h3>' + (s.organisation ? '<p>' + esc(s.organisation) + '</p>' : '') + '</div><div class="when">' + esc(s.years || "") + '</div></li>';
+    }).join("") + '</ul>');
+  }
+
+  function overviewHTML() {
+    var p = state.profile;
+    var paras = String(p.bio || "").split(/\n\s*\n/).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join("");
+    var arts = state.publications.filter(function (x) { return x.type !== "thesis"; });
+    var tiles = [];
+    function tile(tab, n, label, sub) {
+      tiles.push('<button class="tile" data-tab="' + tab + '"><b>' + n + '</b><span class="t-label">' + esc(label) + '</span>' + (sub ? '<span class="t-sub">' + esc(sub) + '</span>' : '') + '</button>');
+    }
+    var coauthors = {};
+    arts.forEach(function (a) { String(a.authors).split(/\.,\s*/).forEach(function (n) { n = n.trim(); if (n && !/^Majakwara/.test(n)) coauthors[n.replace(/\.$/, "")] = 1; }); });
+    tile("publications", arts.length, "Publications", "Journal articles");
+    tile("publications", Object.keys(coauthors).length, "Co-authors", "Across all articles");
+    if (state.supervision.length) tile("supervision", state.supervision.length, "Students supervised", state.supervision.filter(function (s) { return s.status !== "Completed"; }).length + " current");
+    if (state.reviewing.length) tile("reviewing", state.reviewing.length, "Journals reviewed for", "Peer review");
+    if (state.teaching.length) tile("teaching", state.teaching.length, "Courses taught", "Teaching");
+    var linkTiles = (p.links || []).map(function (l) {
+      var u = safeUrl(l.url); if (!u) return "";
+      return '<a class="tile link" href="' + esc(u) + '" target="_blank" rel="noopener"><b>' + esc(l.label) + ' ↗</b><span class="t-sub">' + esc(u.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]) + '</span></a>';
+    }).join("");
+    var recent = state.publications.slice().filter(function (x) { return x.type !== "thesis"; })
+      .sort(function (a, b) { return b.year - a.year; }).slice(0, 3).map(function (x) {
+        return '<li><span class="y">' + esc(x.year) + '</span><div><p class="pub-title">' + esc(x.title) + '</p><p class="pub-venue"><em>' + esc(x.venue) + '</em></p></div></li>';
+      }).join("");
+    return sectionWrap("about", "Biography", null, '<div class="prose">' + paras + '</div>') +
+      sectionWrap("glance", "At a glance", null, '<div class="tiles">' + tiles.join("") + '</div>') +
+      sectionWrap("recent", "Recent publications", null, '<ul class="recent">' + recent + '</ul><p style="margin:18px 0 0"><button class="more" data-tab="publications">See all publications</button></p>') +
+      sectionWrap("profiles", "Research profiles", null, '<div class="tiles">' + linkTiles + '</div>');
+  }
+
+  var TABS = [
+    { id: "overview", label: "Overview", html: overviewHTML },
+    { id: "publications", label: "Publications", html: pubsHTML, n: function () { return state.publications.length; } },
+    { id: "supervision", label: "Supervision", html: supervisionHTML, n: function () { return state.supervision.length; } },
+    { id: "reviewing", label: "Peer review", html: reviewingHTML, n: function () { return state.reviewing.length; } },
+    { id: "teaching", label: "Teaching", html: teachingHTML, n: function () { return state.teaching.length; } },
+    { id: "education", label: "Education", html: educationHTML },
+    { id: "service", label: "Service", html: serviceHTML, n: function () { return (state.service || []).length; } },
+    { id: "contact", label: "Contact", html: contactHTML }
+  ];
+  var activeTab = (location.hash || "").replace("#", "") || "overview";
+
+  function render() {
+    var panels = TABS.map(function (t) { return { t: t, html: t.html() }; }).filter(function (x) { return x.html; });
+    if (!panels.some(function (x) { return x.t.id === activeTab; })) activeTab = "overview";
+    var nav = '<nav class="tabbar" aria-label="Sections"><div class="wrap"><div class="tabs" role="tablist">' + panels.map(function (x) {
+      var n = x.t.n ? x.t.n() : null;
+      return '<button class="tab" role="tab" id="tab-' + x.t.id + '" data-tab="' + x.t.id + '" aria-controls="panel-' + x.t.id + '" aria-selected="' + (x.t.id === activeTab) + '">' + esc(x.t.label) + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
+    }).join("") + '</div></div></nav>';
+    var body = panels.map(function (x) {
+      return '<div class="panel" role="tabpanel" id="panel-' + x.t.id + '" aria-labelledby="tab-' + x.t.id + '"' + (x.t.id === activeTab ? '' : ' hidden') + '>' + x.html + '</div>';
+    }).join("");
+    document.getElementById("app").innerHTML = heroHTML() + nav +
+      '<main><div class="wrap">' + body + '</div></main>' +
+      '<footer><div class="wrap"><span>© ' + new Date().getFullYear() + ' ' + esc(state.profile.name) + '</span><span>Records last updated ' + esc(state.updated || "") + '</span></div></footer>';
+  }
+
+  function showTab(id, scroll) {
+    activeTab = id;
+    document.querySelectorAll(".tab").forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.tab === id)); });
+    document.querySelectorAll(".panel").forEach(function (p) { p.hidden = p.id !== "panel-" + id; });
+    var cur = document.getElementById("tab-" + id);
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest", inline: "nearest" });
+    if (history.replaceState) history.replaceState(null, "", "#" + id);
+    if (scroll) { var bar = document.querySelector(".tabbar"); if (bar) window.scrollTo({ top: bar.offsetTop, behavior: "smooth" }); }
+  }
+  window.addEventListener("hashchange", function () { var id = location.hash.replace("#", ""); if (document.getElementById("panel-" + id)) showTab(id); });
 
   function ownerBarHTML() {
     if (!canEdit) return "";
@@ -574,9 +680,10 @@ dialog h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px;
 
   /* ---------- Events ---------- */
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-act],[data-filter]");
+    var b = e.target.closest("[data-act],[data-filter],[data-tab]");
     if (!b) return;
     if (b.dataset.filter) { filter = b.dataset.filter; rerenderPubs(); return; }
+    if (b.dataset.tab) { showTab(b.dataset.tab, !b.classList.contains("tab")); return; }
     var act = b.dataset.act, sec = b.dataset.sec, id = b.dataset.id;
     if (act === "copy") {
       var t = state.profile.email, msg = document.getElementById("copy-msg");
