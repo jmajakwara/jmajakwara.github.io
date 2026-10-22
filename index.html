@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Jacob Majakwara, statistician at the University of the Witwatersrand: survival analysis, cure rate models, competing risks and time series.">
+<title>Jacob Majakwara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style id="site-style">
+/* Layout: an academic record. Pale-blue page, a hero carrying a survival curve with a cure plateau,
+   then sections set as a narrow label column beside the content column. */
+:root {
+  --bg: #e6f0fa;
+  --bg-deep: #d5e5f5;
+  --surface: #f5f9fe;
+  --ink: #0f2236;
+  --muted: #4b6079;
+  --line: #bfd3e8;
+  --accent: #1a5590;
+  --accent-soft: #d0e2f4;
+  --plateau: #c06a1a;
+  --danger: #a3312b;
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --measure: 68ch;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1825; --bg-deep: #10202f; --surface: #132637; --ink: #e2edf8; --muted: #94aac0;
+    --line: #26405a; --accent: #84bdf0; --accent-soft: #1b3550; --plateau: #f0a560; --danger: #f08a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1825; --bg-deep: #10202f; --surface: #132637; --ink: #e2edf8; --muted: #94aac0;
+  --line: #26405a; --accent: #84bdf0; --accent-soft: #1b3550; --plateau: #f0a560; --danger: #f08a80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+}
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Hero */
+.hero { background: linear-gradient(180deg, var(--bg-deep), var(--bg)); border-bottom: 1px solid var(--line); }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 40px; align-items: center; padding-block: 56px 44px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(40px, 6.4vw, 68px); line-height: 1.02; letter-spacing: -.015em; margin: 0 0 16px; text-wrap: balance; }
+.role { font-size: 18px; color: var(--muted); margin: 0 0 22px; max-width: 46ch; }
+.role strong { color: var(--ink); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; padding: 0; list-style: none; }
+.chip { font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); }
+.links { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; }
+.links a { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.orcid-id { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.curve { width: 100%; max-width: 440px; justify-self: end; }
+.curve svg { display: block; width: 100%; height: auto; overflow: visible; }
+.curve figcaption { font-size: 12.5px; color: var(--muted); margin-top: 8px; font-style: italic; font-family: var(--font-display); }
+
+/* Stats strip */
+.stats { display: flex; flex-wrap: wrap; gap: 12px 40px; padding: 18px 0 0; margin: 26px 0 0; border-top: 1px solid var(--line); }
+.stat b { display: block; font-family: var(--font-display); font-size: 28px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12.5px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+
+/* Sections */
+main .wrap { padding-block: 12px 64px; }
+section.block { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 32px; padding: 44px 0; border-bottom: 1px solid var(--line); }
+section.block:last-of-type { border-bottom: 0; }
+.block-head h2 { font-family: var(--font-display); font-size: 26px; font-weight: 500; margin: 0; line-height: 1.15; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.block-head .count { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 400; }
+.block-body { min-width: 0; }
+.prose p { max-width: var(--measure); margin: 0 0 14px; }
+
+/* Publications */
+.pub-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 26px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+.seg button { font: inherit; font-size: 13.5px; border: 0; background: transparent; color: var(--muted); padding: 5px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.search { flex: 1 1 200px; min-width: 0; font: inherit; font-size: 14px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); }
+.year-group { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 18px; }
+.year-group + .year-group { margin-top: 26px; }
+.year { font-family: var(--font-mono); font-size: 14px; color: var(--accent); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.pubs { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.pub { max-width: var(--measure); }
+.pub-title { font-family: var(--font-display); font-size: 19px; line-height: 1.3; font-weight: 500; margin: 0 0 4px; text-wrap: pretty; }
+.pub-authors { font-size: 14.5px; color: var(--muted); margin: 0 0 2px; }
+.pub-authors .me { color: var(--ink); font-weight: 600; }
+.pub-venue { font-size: 14.5px; margin: 0; }
+.pub-venue em { font-style: italic; }
+.pub-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 13px; }
+.tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); padding: 1px 7px; border-radius: 4px; }
+.doi { font-family: var(--font-mono); font-size: 12.5px; }
+.empty-note { color: var(--muted); font-style: italic; }
+
+/* Generic record tables (supervision, review, teaching) */
+.records { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.record { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; padding: 14px 0; border-top: 1px solid var(--line); }
+.record:first-child { border-top: 0; padding-top: 0; }
+.record h3 { font-size: 16px; font-weight: 600; margin: 0; }
+.record p { margin: 2px 0 0; font-size: 14.5px; color: var(--muted); max-width: var(--measure); }
+.record .when { font-family: var(--font-mono); font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.status { display: inline-block; font-size: 12px; padding: 1px 9px; border-radius: 999px; margin-left: 8px; vertical-align: 2px; font-weight: 500; }
+.status.current { background: var(--accent-soft); color: var(--accent); }
+.status.completed { border: 1px solid var(--line); color: var(--muted); }
+.subhead { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.subhead:not(:first-child) { margin-top: 28px; }
+
+/* Contact */
+.contact-line { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.email { font-family: var(--font-mono); font-size: 15px; user-select: all; }
+.btn { font: inherit; font-size: 13.5px; font-weight: 500; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.danger { color: var(--danger); }
+.btn.small { font-size: 12.5px; padding: 3px 10px; }
+footer { border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+footer .wrap { padding-block: 22px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+
+/* Owner editing */
+.edit-only { display: none; }
+body.editing .edit-only { display: revert; }
+body.editing .item-actions { display: flex; }
+.item-actions { display: none; gap: 6px; margin-top: 8px; }
+.add-row { margin-top: 18px; }
+.owner-bar {
+  position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; z-index: 20;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 6px 6px 14px;
+  box-shadow: 0 6px 24px rgba(15, 34, 54, .14); font-size: 13px; max-width: calc(100vw - 32px);
+}
+.owner-bar .msg { color: var(--muted); }
+.owner-bar .msg.dirty { color: var(--plateau); font-weight: 600; }
+.edit-banner { background: var(--accent-soft); border-bottom: 1px solid var(--line); font-size: 14px; }
+.edit-banner .wrap { padding-block: 10px; }
+dialog { border: 1px solid var(--line); border-radius: 14px; padding: 0; width: min(560px, calc(100vw - 32px)); background: var(--surface); color: var(--ink); }
+dialog::backdrop { background: rgba(10, 24, 40, .45); }
+dialog form { padding: 22px 22px 18px; display: grid; gap: 14px; }
+dialog h3 { font-family: var(--font-display); font-weight: 500; font-size: 22px; margin: 0; }
+.field { display: grid; gap: 4px; }
+.field label { font-size: 13px; font-weight: 600; }
+.field .hint { font-size: 12px; color: var(--muted); }
+.field input, .field textarea, .field select { font: inherit; font-size: 14.5px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100%; }
+.field textarea { min-height: 96px; resize: vertical; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+@media (max-width: 800px) {
+  .hero .wrap { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 36px 30px; }
+  .curve { justify-self: start; max-width: 360px; }
+  section.block { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 32px 0; }
+  .block-head h2 { position: static; }
+  .year-group { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .record { grid-template-columns: minmax(0, 1fr); }
+  .record .when { text-align: left; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .km-path { stroke-dasharray: 900; stroke-dashoffset: 0; animation: draw 1.6s ease-out; }
+  @keyframes draw { from { stroke-dashoffset: 900; } to { stroke-dashoffset: 0; } }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<!-- TO UPDATE THE SITE: edit the JSON below (publications, supervision, reviewing, teaching), then commit. -->
+<script type="application/json" id="site-data">{
+  "profile": {
+    "name": "Jacob Majakwara",
+    "title": "Statistician",
+    "unit": "School of Statistics and Actuarial Science",
+    "institution": "University of the Witwatersrand, Johannesburg",
+    "email": "Jacob.Majakwara@wits.ac.za",
+    "orcid": "0000-0002-4010-0001",
+    "bio": "Jacob Majakwara is a statistician in the School of Statistics and Actuarial Science at the University of the Witwatersrand, Johannesburg.\n\nHis research is in survival analysis and time series analysis. In survival analysis he works on cure rate models, competing risks and copula models, including likelihood inference through EM-type algorithms for destructive COM-Poisson cure models. His applied work spans cancer and transplant data, epidemiological count series and credit risk, where he combines long-term survival models with multiple imputation and explainable machine learning.",
+    "interests": ["Survival analysis", "Cure rate models", "Competing risks", "Copula models", "Time series analysis", "Credit risk modelling"],
+    "links": [
+      {"label": "ORCID", "url": "https://orcid.org/0000-0002-4010-0001"},
+      {"label": "Google Scholar", "url": "https://scholar.google.com/citations?user=6cU0DcgAAAAJ"},
+      {"label": "ResearchGate", "url": "https://www.researchgate.net/profile/Jacob-Majakwara"},
+      {"label": "GitHub", "url": "https://github.com/jmajakwara"},
+      {"label": "Academia.edu", "url": "https://wits.academia.edu/JacobMajakwara"}
+    ]
+  },
+  "publications": [
+    {"id": "p1", "type": "journal", "year": 2026, "authors": "Majakwara, J., Hove, H.", "title": "Copula-based models for competing risks: a comprehensive review", "venue": "Statistical Papers", "details": "67, 91", "doi": "10.1007/s00362-026-01871-6", "url": "", "code": ""},
+    {"id": "p2", "type": "journal", "year": 2026, "authors": "Majakwara, J.", "title": "From cure rate models to explainable survival analysis: SurvSHAP based insights for credit risk", "venue": "Applied Stochastic Models in Business and Industry", "details": "42(5), e70128", "doi": "", "url": "", "code": ""},
+    {"id": "p3", "type": "journal", "year": 2026, "authors": "Chavalala, T.H., Chifurira, R., Chinhamu, K., Majakwara, J.", "title": "Volatile count modelling of COVID-19 mortality data: a zero-inflated overdispersed time series framework", "venue": "Statistics, Optimization & Information Computing", "details": "15(4), 3305–3319", "doi": "", "url": "", "code": ""},
+    {"id": "p4", "type": "journal", "year": 2026, "authors": "Chavalala, T.H., Chifurira, R., Chinhamu, K., Majakwara, J.", "title": "Modelling epidemiological count time series using integer-valued GARCH models embedded with Fourier terms", "venue": "Journal of Statistics Applications & Probability", "details": "15(4), 995–1012", "doi": "", "url": "", "code": ""},
+    {"id": "p5", "type": "journal", "year": 2025, "authors": "Majakwara, J., Mthisi, P.L., Chipoyera, H.W.", "title": "Enhancing credit risk management through integration of multiple imputation methodology and long-term survival modelling", "venue": "Applied Stochastic Models in Business and Industry", "details": "", "doi": "10.1002/asmb.70027", "url": "", "code": "https://github.com/jmajakwara/Credit-risk"},
+    {"id": "p6", "type": "journal", "year": 2023, "authors": "Donald, H., Blane, A., Buthelezi, S., Naicker, P., Stoychev, S., Majakwara, J., Fanucchi, S.", "title": "Assessing the dynamics and macromolecular interactions of the intrinsically disordered protein YY1", "venue": "Bioscience Reports", "details": "", "doi": "10.1042/BSR20231295", "url": "", "code": ""},
+    {"id": "p7", "type": "journal", "year": 2019, "authors": "Majakwara, J., Pal, S.", "title": "On some inferential issues for the destructive COM-Poisson-generalized gamma regression cure rate model", "venue": "Communications in Statistics: Simulation and Computation", "details": "48(10), 3118–3142", "doi": "", "url": "", "code": ""},
+    {"id": "p8", "type": "journal", "year": 2018, "authors": "Pal, S., Majakwara, J., Balakrishnan, N.", "title": "An EM algorithm for the destructive COM-Poisson regression cure rate model", "venue": "Metrika", "details": "81(2), 143–171", "doi": "10.1007/s00184-017-0638-8", "url": "", "code": ""},
+    {"id": "p9", "type": "thesis", "year": 2018, "authors": "Majakwara, J.", "title": "On some likelihood inference for the destructive COM-Poisson cure rate model with generalised gamma lifetime", "venue": "University of the Witwatersrand, School of Statistics and Actuarial Science", "details": "Thesis", "doi": "", "url": "", "code": ""},
+    {"id": "p10", "type": "thesis", "year": 2009, "authors": "Majakwara, J.", "title": "Application of multiserver queueing to call centres", "venue": "Rhodes University", "details": "Thesis", "doi": "", "url": "", "code": ""}
+  ],
+  "supervision": [],
+  "reviewing": [],
+  "teaching": [],
+  "updated": "2026-10-22"
+}</script>
+<script id="site-app">
+(function () {
+  "use strict";
+  var SKELETON_HEAD = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>';
+  var DRAFT_KEY = "jm-site-draft";
+
+  var saved = JSON.parse(document.getElementById("site-data").textContent);
+  var state = JSON.parse(JSON.stringify(saved));
+  var canEdit = false, editing = false, dirty = false, artifactNs = null;
+  var filter = "all", query = "";
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function safeUrl(u) { u = String(u || "").trim(); return /^https?:\/\//i.test(u) ? u : ""; }
+  function uid() { return "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function markMe(authors) {
+    return esc(authors).replace(/(Majakwara,\s*J\.?)/g, '<span class="me">$1</span>');
+  }
+
+  /* ---------- Section schemas for the editor ---------- */
+  var SCHEMAS = {
+    publications: {
+      label: "publication",
+      fields: [
+        { k: "title", label: "Title", req: true },
+        { k: "authors", label: "Authors", hint: "As cited, e.g. Majakwara, J., Hove, H." , req: true },
+        { k: "year", label: "Year", type: "number", req: true },
+        { k: "venue", label: "Journal or institution", req: true },
+        { k: "details", label: "Volume, issue, pages", hint: "e.g. 81(2), 143–171" },
+        { k: "doi", label: "DOI", hint: "e.g. 10.1007/s00184-017-0638-8" },
+        { k: "url", label: "Other link (if no DOI)" },
+        { k: "code", label: "Code or data link" },
+        { k: "type", label: "Type", type: "select", options: [["journal", "Journal article"], ["chapter", "Book chapter"], ["conference", "Conference paper"], ["preprint", "Preprint"], ["thesis", "Thesis"]] }
+      ]
+    },
+    supervision: {
+      label: "student",
+      fields: [
+        { k: "student", label: "Student name", req: true },
+        { k: "degree", label: "Degree", type: "select", options: [["PhD", "PhD"], ["MSc", "MSc"], ["Honours", "Honours"], ["Postdoc", "Postdoctoral fellow"]] },
+        { k: "thesis", label: "Thesis or project title" },
+        { k: "role", label: "Your role", type: "select", options: [["Main supervisor", "Main supervisor"], ["Co-supervisor", "Co-supervisor"]] },
+        { k: "status", label: "Status", type: "select", options: [["Current", "Current"], ["Completed", "Completed"]] },
+        { k: "years", label: "Years", hint: "e.g. 2023–present or 2021–2024" }
+      ]
+    },
+    reviewing: {
+      label: "review record",
+      fields: [
+        { k: "journal", label: "Journal", req: true },
+        { k: "years", label: "Years", hint: "e.g. 2022–2026" },
+        { k: "note", label: "Note", hint: "e.g. 4 manuscripts reviewed" }
+      ]
+    },
+    teaching: {
+      label: "course",
+      fields: [
+        { k: "code", label: "Course code", hint: "e.g. STAT2013A" },
+        { k: "name", label: "Course name", req: true },
+        { k: "level", label: "Level", hint: "e.g. Second year" },
+        { k: "years", label: "Years" }
+      ]
+    }
+  };
+
+  /* ---------- Rendering ---------- */
+  function curveSVG() {
+    // Kaplan–Meier style step curve levelling to a cure fraction.
+    var pts = [[0,1],[30,1],[30,.92],[52,.92],[52,.83],[70,.83],[70,.74],[95,.74],[95,.66],[118,.66],[118,.58],[150,.58],[150,.52],[182,.52],[182,.47],[220,.47],[220,.44],[268,.44],[268,.42],[360,.42]];
+    var x0 = 34, y0 = 16, w = 360, h = 200;
+    function X(t) { return x0 + t * (w / 360); }
+    function Y(s) { return y0 + (1 - s) * h; }
+    var d = pts.map(function (p, i) { return (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1); }).join(" ");
+    var cens = [[40,.92],[84,.74],[130,.58],[200,.47],[240,.44],[300,.42],[335,.42]];
+    var ticks = cens.map(function (c) { var x = X(c[0]), y = Y(c[1]); return '<path d="M' + x + ' ' + (y - 5) + 'V' + (y + 5) + '" stroke="var(--accent)" stroke-width="1.4"/>'; }).join("");
+    return '<svg viewBox="0 0 420 252" role="img" aria-label="Survival curve that levels off at a cure fraction">' +
+      '<line x1="' + x0 + '" y1="' + y0 + '" x2="' + x0 + '" y2="' + (y0 + h) + '" stroke="var(--line)" stroke-width="1"/>' +
+      '<line x1="' + x0 + '" y1="' + (y0 + h) + '" x2="' + (x0 + w) + '" y2="' + (y0 + h) + '" stroke="var(--line)" stroke-width="1"/>' +
+      '<text x="' + (x0 - 8) + '" y="' + (Y(1) + 4) + '" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--muted)">1.0</text>' +
+      '<text x="' + (x0 - 8) + '" y="' + (Y(.5) + 4) + '" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--muted)">0.5</text>' +
+      '<text x="' + (x0 - 8) + '" y="' + (Y(0) + 4) + '" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--muted)">0</text>' +
+      '<text x="' + (x0 + w) + '" y="' + (y0 + h + 22) + '" text-anchor="end" font-family="Newsreader, Georgia, serif" font-style="italic" font-size="14" fill="var(--muted)">t</text>' +
+      '<text x="' + (x0 + 6) + '" y="' + (y0 + 2) + '" font-family="Newsreader, Georgia, serif" font-style="italic" font-size="14" fill="var(--muted)">S(t)</text>' +
+      '<line x1="' + x0 + '" y1="' + Y(.42) + '" x2="' + (x0 + w) + '" y2="' + Y(.42) + '" stroke="var(--plateau)" stroke-width="1" stroke-dasharray="3 4"/>' +
+      '<path class="km-path" d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="miter"/>' +
+      ticks +
+      '<text x="' + (x0 + w) + '" y="' + (Y(.42) + 18) + '" text-anchor="end" font-family="Newsreader, Georgia, serif" font-style="italic" font-size="13.5" fill="var(--plateau)">cure fraction p₀</text>' +
+      '</svg>';
+  }
+
+  function heroHTML() {
+    var p = state.profile;
+    var pubs = state.publications;
+    var articles = pubs.filter(function (x) { return x.type !== "thesis"; }).length;
+    var journalYears = pubs.filter(function (x) { return x.type !== "thesis"; }).map(function (x) { return +x.year; }).filter(Boolean);
+    var firstYear = journalYears.length ? Math.min.apply(null, journalYears) : "";
+    var stats = '<div class="stats">' +
+      '<div class="stat"><b>' + articles + '</b><span>Publications</span></div>' +
+      (firstYear ? '<div class="stat"><b>' + firstYear + '</b><span>First paper</span></div>' : '') +
+      (state.supervision.length ? '<div class="stat"><b>' + state.supervision.length + '</b><span>Students supervised</span></div>' : '') +
+      (state.reviewing.length ? '<div class="stat"><b>' + state.reviewing.length + '</b><span>Journals reviewed for</span></div>' : '') +
+      '</div>';
+    var links = (p.links || []).map(function (l) {
+      var u = safeUrl(l.url); if (!u) return "";
+      return '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(l.label) + ' ↗</a>';
+    }).join("");
+    return '<header class="hero"><div class="wrap">' +
+      '<div><p class="eyebrow">' + esc(p.title) + ' · ' + esc(p.unit) + '</p>' +
+      '<h1>' + esc(p.name) + '</h1>' +
+      '<p class="role"><strong>' + esc(p.institution) + '</strong></p>' +
+      '<ul class="chips">' + (p.interests || []).map(function (i) { return '<li class="chip">' + esc(i) + '</li>'; }).join("") + '</ul>' +
+      '<div class="links">' + links + '</div>' +
+      (p.orcid ? '<p class="orcid-id">ORCID iD ' + esc(p.orcid) + '</p>' : '') +
+      stats + '</div>' +
+      '<figure class="curve" aria-hidden="false">' + curveSVG() + '<figcaption>A survival curve that levels off: the share of subjects who never experience the event.</figcaption></figure>' +
+      '</div></header>';
+  }
+
+  function sectionWrap(id, title, count, body) {
+    return '<section class="block" id="' + id + '"><div class="block-head"><h2>' + esc(title) +
+      (count != null ? '<span class="count">' + count + '</span>' : '') + '</h2></div><div class="block-body">' + body + '</div></section>';
+  }
+  function itemActions(section, id) {
+    return '<div class="item-actions"><button class="btn small" data-act="edit" data-sec="' + section + '" data-id="' + esc(id) + '">Edit</button>' +
+      '<button class="btn small danger" data-act="del" data-sec="' + section + '" data-id="' + esc(id) + '">Delete</button></div>';
+  }
+  function addButton(section) {
+    return '<div class="add-row edit-only"><button class="btn" data-act="add" data-sec="' + section + '">Add ' + SCHEMAS[section].label + '</button></div>';
+  }
+
+  function aboutHTML() {
+    var paras = String(state.profile.bio || "").split(/\n\s*\n/).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join("");
+    return sectionWrap("about", "About", null, '<div class="prose">' + paras + '</div>' +
+      '<div class="item-actions"><button class="btn small" data-act="profile">Edit profile</button></div>');
+  }
+
+  function pubsHTML() {
+    var all = state.publications.slice().sort(function (a, b) { return (b.year - a.year) || String(a.title).localeCompare(b.title); });
+    var q = query.trim().toLowerCase();
+    var list = all.filter(function (p) {
+      if (filter === "articles" && p.type === "thesis") return false;
+      if (filter === "theses" && p.type !== "thesis") return false;
+      if (q && (p.title + " " + p.authors + " " + p.venue + " " + p.year).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    var nArt = all.filter(function (p) { return p.type !== "thesis"; }).length;
+    var nTh = all.length - nArt;
+    var byYear = {};
+    list.forEach(function (p) { (byYear[p.year] = byYear[p.year] || []).push(p); });
+    var years = Object.keys(byYear).sort(function (a, b) { return b - a; });
+    var groups = years.map(function (y) {
+      return '<div class="year-group"><div class="year">' + esc(y) + '</div><ul class="pubs">' + byYear[y].map(function (p) {
+        var doi = String(p.doi || "").trim();
+        var meta = [];
+        if (p.type && p.type !== "journal") meta.push('<span class="tag">' + esc(p.type) + '</span>');
+        if (doi) meta.push('<a class="doi" href="https://doi.org/' + esc(doi) + '" target="_blank" rel="noopener">doi:' + esc(doi) + '</a>');
+        if (safeUrl(p.url)) meta.push('<a href="' + esc(safeUrl(p.url)) + '" target="_blank" rel="noopener">Link ↗</a>');
+        if (safeUrl(p.code)) meta.push('<a href="' + esc(safeUrl(p.code)) + '" target="_blank" rel="noopener">Code ↗</a>');
+        return '<li class="pub"><p class="pub-title">' + esc(p.title) + '</p>' +
+          '<p class="pub-authors">' + markMe(p.authors) + '</p>' +
+          '<p class="pub-venue"><em>' + esc(p.venue) + '</em>' + (p.details && p.type !== "thesis" ? ', ' + esc(p.details) : '') + '</p>' +
+          (meta.length ? '<div class="pub-meta">' + meta.join("") + '</div>' : '') +
+          itemActions("publications", p.id) + '</li>';
+      }).join("") + '</ul></div>';
+    }).join("");
+    var tools = '<div class="pub-tools"><div class="seg" role="group" aria-label="Filter publications">' +
+      '<button data-filter="all" aria-pressed="' + (filter === "all") + '">All ' + all.length + '</button>' +
+      '<button data-filter="articles" aria-pressed="' + (filter === "articles") + '">Articles ' + nArt + '</button>' +
+      '<button data-filter="theses" aria-pressed="' + (filter === "theses") + '">Theses ' + nTh + '</button></div>' +
+      '<input class="search" id="pub-search" type="search" placeholder="Search titles, co-authors, journals" value="' + esc(query) + '" aria-label="Search publications"></div>';
+    return sectionWrap("publications", "Publications", nArt + " articles · " + nTh + " theses",
+      tools + '<div id="pub-list">' + (groups || '<p class="empty-note">No publications match that search.</p>') + '</div>' + addButton("publications"));
+  }
+
+  function recordSection(key, title, renderItem, emptyText) {
+    var items = state[key];
+    if (!items.length && !editing) return "";
+    var body = items.length ? renderItem(items) : '<p class="empty-note">' + esc(emptyText) + '</p>';
+    return sectionWrap(key, title, items.length ? String(items.length) : null, body + addButton(key));
+  }
+
+  function supervisionHTML() {
+    return recordSection("supervision", "Supervision", function (items) {
+      var order = ["PhD", "MSc", "Honours", "Postdoc"];
+      var cur = items.filter(function (s) { return s.status !== "Completed"; });
+      var done = items.filter(function (s) { return s.status === "Completed"; });
+      function list(arr) {
+        arr = arr.slice().sort(function (a, b) { return order.indexOf(a.degree) - order.indexOf(b.degree); });
+        return '<ul class="records">' + arr.map(function (s) {
+          return '<li class="record"><div><h3>' + esc(s.student) + ' <span class="status ' + (s.status === "Completed" ? "completed" : "current") + '">' + esc(s.degree || "") + '</span></h3>' +
+            (s.thesis ? '<p>' + esc(s.thesis) + '</p>' : '') +
+            (s.role ? '<p>' + esc(s.role) + '</p>' : '') + itemActions("supervision", s.id) + '</div>' +
+            '<div class="when">' + esc(s.years || "") + '</div></li>';
+        }).join("") + '</ul>';
+      }
+      return (cur.length ? '<p class="subhead">Current students</p>' + list(cur) : '') +
+        (done.length ? '<p class="subhead">Completed</p>' + list(done) : '');
+    }, "Add your current and past postgraduate students. This section stays hidden from visitors until it has at least one entry.");
+  }
+  function reviewingHTML() {
+    return recordSection("reviewing", "Peer review", function (items) {
+      return '<p class="subhead">Reviewer for</p><ul class="records">' + items.map(function (r) {
+        return '<li class="record"><div><h3>' + esc(r.journal) + '</h3>' + (r.note ? '<p>' + esc(r.note) + '</p>' : '') + itemActions("reviewing", r.id) + '</div><div class="when">' + esc(r.years || "") + '</div></li>';
+      }).join("") + '</ul>';
+    }, "Add the journals you review for. This section stays hidden from visitors until it has at least one entry.");
+  }
+  function teachingHTML() {
+    return recordSection("teaching", "Teaching", function (items) {
+      return '<ul class="records">' + items.map(function (c) {
+        return '<li class="record"><div><h3>' + (c.code ? '<span class="doi">' + esc(c.code) + '</span> ' : '') + esc(c.name) + '</h3>' + (c.level ? '<p>' + esc(c.level) + '</p>' : '') + itemActions("teaching", c.id) + '</div><div class="when">' + esc(c.years || "") + '</div></li>';
+      }).join("") + '</ul>';
+    }, "Add the courses you teach. This section stays hidden from visitors until it has at least one entry.");
+  }
+  function contactHTML() {
+    var p = state.profile;
+    return sectionWrap("contact", "Contact", null,
+      '<div class="contact-line"><span class="email" id="email-text">' + esc(p.email) + '</span>' +
+      '<button class="btn small" data-act="copy">Copy email</button><span id="copy-msg" class="orcid-id" aria-live="polite"></span></div>' +
+      '<p class="orcid-id" style="margin-top:12px">' + esc(p.unit) + ', ' + esc(p.institution) + '</p>');
+  }
+
+  function render() {
+    var banner = editing ? '<div class="edit-banner"><div class="wrap">Editing mode. Changes stay in this browser until you choose <strong>Publish changes</strong>. Visitors only ever see the published version.</div></div>' : '';
+    document.getElementById("app").innerHTML = banner + heroHTML() +
+      '<main><div class="wrap">' + aboutHTML() + pubsHTML() + supervisionHTML() + reviewingHTML() + teachingHTML() + contactHTML() + '</div></main>' +
+      '<footer><div class="wrap"><span>© ' + new Date().getFullYear() + ' ' + esc(state.profile.name) + '</span><span>Records last updated ' + esc(state.updated || "") + '</span></div></footer>' +
+      ownerBarHTML();
+    document.body.classList.toggle("editing", editing);
+  }
+
+  function ownerBarHTML() {
+    if (!canEdit) return "";
+    if (!editing) return '<div class="owner-bar"><span class="msg">Only you see this</span><button class="btn primary" data-act="start-edit">Edit site</button></div>';
+    return '<div class="owner-bar"><span class="msg' + (dirty ? ' dirty' : '') + '" id="owner-msg">' + (dirty ? 'Unsaved changes' : 'No changes yet') + '</span>' +
+      '<button class="btn" data-act="cancel-edit">' + (dirty ? 'Discard' : 'Done') + '</button>' +
+      '<button class="btn primary" data-act="publish"' + (dirty ? '' : ' disabled') + '>Publish changes</button></div>';
+  }
+
+  function rerenderPubs() {
+    var host = document.getElementById("publications");
+    if (!host) return render();
+    var tmp = document.createElement("div");
+    tmp.innerHTML = pubsHTML();
+    var fresh = tmp.firstChild;
+    // keep the search box (and its focus/caret) in place; swap only the list and filter buttons
+    host.querySelector("#pub-list").replaceWith(fresh.querySelector("#pub-list"));
+    host.querySelector(".seg").replaceWith(fresh.querySelector(".seg"));
+  }
+
+  /* ---------- Editor dialog ---------- */
+  var dlg = document.createElement("dialog");
+  document.body.appendChild(dlg);
+
+  function openEditor(section, id) {
+    var schema = section === "profile" ? null : SCHEMAS[section];
+    var item, fields, title;
+    if (section === "profile") {
+      var p = state.profile;
+      item = { name: p.name, title: p.title, unit: p.unit, institution: p.institution, email: p.email, orcid: p.orcid,
+        interests: (p.interests || []).join(", "), bio: p.bio,
+        links: (p.links || []).map(function (l) { return l.label + " | " + l.url; }).join("\n") };
+      fields = [
+        { k: "name", label: "Name", req: true }, { k: "title", label: "Position" }, { k: "unit", label: "School or department" },
+        { k: "institution", label: "Institution" }, { k: "email", label: "Email" }, { k: "orcid", label: "ORCID iD" },
+        { k: "interests", label: "Research interests", hint: "Separate with commas" },
+        { k: "bio", label: "About", type: "textarea", hint: "Leave a blank line between paragraphs" },
+        { k: "links", label: "Profile links", type: "textarea", hint: "One per line: Label | https://…" }
+      ];
+      title = "Edit profile";
+    } else {
+      item = id ? state[section].find(function (x) { return x.id === id; }) : {};
+      fields = schema.fields;
+      title = (id ? "Edit " : "Add ") + schema.label;
+    }
+    var html = '<form method="dialog" id="ed-form"><h3>' + esc(title) + '</h3>' + fields.map(function (f) {
+      var v = item && item[f.k] != null ? item[f.k] : "";
+      var fid = "ed-" + f.k;
+      var input;
+      if (f.type === "select") {
+        input = '<select id="' + fid + '" name="' + f.k + '">' + f.options.map(function (o) {
+          return '<option value="' + esc(o[0]) + '"' + (String(v) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+        }).join("") + '</select>';
+      } else if (f.type === "textarea") {
+        input = '<textarea id="' + fid + '" name="' + f.k + '">' + esc(v) + '</textarea>';
+      } else {
+        input = '<input id="' + fid + '" name="' + f.k + '" type="' + (f.type || "text") + '" value="' + esc(v) + '"' + (f.req ? ' required' : '') + '>';
+      }
+      return '<div class="field"><label for="' + fid + '">' + esc(f.label) + '</label>' + input + (f.hint ? '<span class="hint">' + esc(f.hint) + '</span>' : '') + '</div>';
+    }).join("") + '<div class="dialog-actions"><button type="button" class="btn" data-act="close-dlg">Cancel</button><button type="submit" class="btn primary">Save</button></div></form>';
+    dlg.innerHTML = html;
+    dlg.querySelector("#ed-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var fd = new FormData(e.target), out = {};
+      fields.forEach(function (f) { out[f.k] = String(fd.get(f.k) || "").trim(); });
+      if (section === "profile") {
+        var p = state.profile;
+        p.name = out.name; p.title = out.title; p.unit = out.unit; p.institution = out.institution; p.email = out.email; p.orcid = out.orcid; p.bio = out.bio;
+        p.interests = out.interests.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+        p.links = out.links.split("\n").map(function (line) {
+          var parts = line.split("|"); if (parts.length < 2) return null;
+          return { label: parts[0].trim(), url: parts.slice(1).join("|").trim() };
+        }).filter(function (l) { return l && l.label && safeUrl(l.url); });
+      } else {
+        if (out.year) out.year = parseInt(out.year, 10) || out.year;
+        if (id) { Object.assign(item, out); }
+        else { out.id = uid(); state[section].push(out); }
+      }
+      markDirty(); dlg.close(); render();
+    });
+    dlg.showModal();
+    var first = dlg.querySelector("input,textarea,select"); if (first) first.focus();
+  }
+
+  function markDirty() {
+    dirty = true;
+    state.updated = new Date().toISOString().slice(0, 10);
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  /* ---------- Publishing the new version ---------- */
+  function buildDocument() {
+    var css = document.getElementById("site-style").textContent;
+    var js = document.getElementById("site-app").textContent;
+    var data = JSON.stringify(state, null, 2).replace(/</g, "\\u003c");
+    return SKELETON_HEAD +
+      '<title>' + esc(state.profile.name) + '</title>\n' +
+      '<meta name="claude:viewport-fit-sides" content="cover">\n' +
+      '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">\n' +
+      '<style id="site-style">' + css + '</style>\n' +
+      '<div id="app"></div>\n' +
+      '<script type="application/json" id="site-data">' + data + '</' + 'script>\n' +
+      '<script id="site-app">' + js + '</' + 'script>' +
+      '</body></html>';
+  }
+
+  function setMsg(text, isDirty) {
+    var m = document.getElementById("owner-msg");
+    if (m) { m.textContent = text; m.classList.toggle("dirty", !!isDirty); }
+  }
+
+  function publish() {
+    if (!artifactNs) { setMsg("Saving isn't available in this view"); return; }
+    setMsg("Publishing…");
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) {}
+    artifactNs.publish(buildDocument()).then(function () {
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch (e) {}
+      setMsg("Published");
+    }).catch(function (err) {
+      var code = err && err.code;
+      if (code === "conflict") { setMsg("A newer version was published; reloading"); return; }
+      if (code === "not_writer" || code === "not_granted" || code === "consent_required" || code === "capability_disabled" || code === "not_declared") {
+        canEdit = false; editing = false; render(); return;
+      }
+      if (code === "rate_limited") { setMsg("Too many saves. Wait a minute, then publish again", true); return; }
+      if (code === "too_large") { setMsg("The page is too large to save", true); return; }
+      setMsg("Couldn't publish. Try again shortly", true);
+    });
+  }
+
+  /* ---------- Events ---------- */
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-act],[data-filter]");
+    if (!b) return;
+    if (b.dataset.filter) { filter = b.dataset.filter; rerenderPubs(); return; }
+    var act = b.dataset.act, sec = b.dataset.sec, id = b.dataset.id;
+    if (act === "copy") {
+      var t = state.profile.email, msg = document.getElementById("copy-msg");
+      var done = function () { if (msg) msg.textContent = "Copied"; };
+      var fallback = function () {
+        var r = document.createRange(); r.selectNodeContents(document.getElementById("email-text"));
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        if (msg) msg.textContent = "Selected. Press Ctrl+C to copy";
+      };
+      try { navigator.clipboard.writeText(t).then(done, fallback); } catch (err) { fallback(); }
+      return;
+    }
+    if (!canEdit) return;
+    if (act === "start-edit") { editing = true; render(); }
+    else if (act === "cancel-edit") {
+      if (dirty) { state = JSON.parse(JSON.stringify(saved)); dirty = false; try { sessionStorage.removeItem(DRAFT_KEY); } catch (err) {} }
+      editing = false; render();
+    }
+    else if (act === "publish") publish();
+    else if (act === "add") openEditor(sec);
+    else if (act === "edit") openEditor(sec, id);
+    else if (act === "profile") openEditor("profile");
+    else if (act === "close-dlg") dlg.close();
+    else if (act === "del") {
+      if (b.dataset.confirm === "1") {
+        state[sec] = state[sec].filter(function (x) { return x.id !== id; });
+        markDirty(); render();
+      } else {
+        b.dataset.confirm = "1"; b.textContent = "Confirm delete";
+        setTimeout(function () { if (b.isConnected) { b.dataset.confirm = ""; b.textContent = "Delete"; } }, 4000);
+      }
+    }
+  });
+  document.addEventListener("input", function (e) {
+    if (e.target.id === "pub-search") { query = e.target.value; rerenderPubs(); }
+  });
+
+  render();
+
+})();
+</script>
+</body>
+</html>
